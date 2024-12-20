@@ -20,7 +20,7 @@ class RecursiveDescentParser
             Console.WriteLine("\n\uD83D\uDC47 Grammars \uD83D\uDC47");
             InputGrammar();
 
-            if (!IsGrammarSimple())
+            if (!IsSimpleGrammar())
             {
                 Console.WriteLine("The Grammar isn't simple.\nTry again.");
                 continue;
@@ -79,23 +79,37 @@ class RecursiveDescentParser
     }
 
     // Validate Grammar Simplicity
-    static bool IsGrammarSimple()
+    static bool IsSimpleGrammar()
     {
-        foreach (var rules in grammar)
+        foreach (var nonTerminal in grammar.Keys)
         {
-            string nonTerminal = rules.Key;
-            foreach (var rule in rules.Value)
+            var rules = grammar[nonTerminal];
+
+            // Check if all rules for this non-terminal are of the form A -> aX (X can be empty)
+            // and have unique first terminals
+            HashSet<char> firstTerminals = new HashSet<char>();
+            foreach (var rule in rules)
             {
-                // Rule is not simple if its length exceeds 2 or contains non-terminals other than at the start
-                if (rule.Length > 2 || rule.Substring(1).Contains(nonTerminal))
+                if (rule.Length == 0)
                 {
-                    return false;
+                    return false; // Empty rule is not allowed (since X cannot be empty)
+                }
+
+                char firstSymbol = rule[0];
+                if (!char.IsLower(firstSymbol))
+                {
+                    return false; // First symbol must be a lowercase letter (terminal)
+                }
+
+                if (!firstTerminals.Add(firstSymbol))
+                {
+                    return false; // Duplicate first terminal for this non-terminal
                 }
             }
         }
+
         return true;
     }
-
     // Recursive Parsing Function
     static bool Parse()
     {
